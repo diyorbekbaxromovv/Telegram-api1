@@ -92,6 +92,16 @@ class User(BaseModel, AbstractUser):
         self.check_hash_password()
         super(User, self).save(*args, **kwargs)
         
+    def create_confirmation_code(self, auth_type):
+        code = "".join([str(random.randint(0,9)) for _ in range(6)])
+        
+        UserCodeVerification.objects.create(
+            code=code,
+            auth_type=auth_type,
+            user_id = self.id
+        )
+        
+        return code
    
         
 class UserCodeVerification(BaseModel):

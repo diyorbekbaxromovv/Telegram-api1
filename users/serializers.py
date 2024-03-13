@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import User, VIA_PHONE, VIA_EMAIL
-from .utils import check_email_or_phone
+from .utils import check_email_or_phone, send_sms
 from rest_framework.validators import ValidationError
 
 
@@ -42,3 +42,14 @@ class SignUpSerializer(serializers.ModelSerializer):
             raise ValidationError(data)
         
         return data 
+    
+    def create(self, validated_data):
+        user = super(SignUpSerializer, self).create(validated_data)
+        auth_type = validated_data.get('auth_type')
+        if auth_type == VIA_EMAIL:
+            code = user.create_confirmation_code(VIA_EMAIL)
+            send_sms(code)
+            
+        elif auth_type == VIA_PHONE:
+            code = user.create_confirmation_code(VIA_PHONE)
+            send_sms(code)
