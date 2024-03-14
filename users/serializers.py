@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import User, VIA_PHONE, VIA_EMAIL
 from .utils import check_email_or_phone, send_sms
 from rest_framework.validators import ValidationError
-
+from django.db.models import Q
 
 class SignUpSerializer(serializers.ModelSerializer):
     auth_type = serializers.CharField(required=False, read_only=True)
@@ -16,6 +16,18 @@ class SignUpSerializer(serializers.ModelSerializer):
         model = User
         fields = ('auth_type', 'auth_status')
         
+        
+    def validate_email_phone(self, email_phone):
+        user = User.objects.filter(Q(email=email_phone) | Q(phone_number=email_phone))
+        
+        if user.exists():
+            data = {
+                "status": False, 
+                "message": "Foydalanuvchi allaqachon ro'yxatdan o'tgan"
+            }
+                
+            raise ValidationError(data)
+        return email_phone
         
     
     def validate(self, data):
@@ -53,3 +65,20 @@ class SignUpSerializer(serializers.ModelSerializer):
         elif auth_type == VIA_PHONE:
             code = user.create_confirmation_code(VIA_PHONE)
             send_sms(code)
+            
+        else:
+            data = {
+                "status": False, 
+                "message": "Code yuborishda hatolik mavjud"
+            }
+            raise ValidationError(data)
+        
+        return user
+    
+    def to_representation(self, instance):
+        data = super(SignUpSerializer, self).to_representation(instance)
+        
+        data['access'] = instance.token()['access']
+        data['refresh'] = instance.token()['refresh']
+        
+        return data 

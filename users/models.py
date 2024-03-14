@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from datetime import datetime, timedelta
 import uuid
 import random
+from rest_framework_simplejwt.tokens import RefreshToken
 # Create your models here.
 
 class BaseModel(models.Model):
@@ -25,8 +26,8 @@ DONE = 'done'
 IMAGE_STEP = 'image_step'
 
 #User register type
-VIA_PHONE = 'vie_phone'
-VIA_EMAIL = 'vie_email'
+VIA_PHONE = 'via_phone'
+VIA_EMAIL = 'via_email'
 
 class User(BaseModel, AbstractUser):
     USER_ROLES = (
@@ -102,7 +103,13 @@ class User(BaseModel, AbstractUser):
         )
         
         return code
-   
+    
+    def token(self):
+        refresh = RefreshToken.for_user(self)
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
         
 class UserCodeVerification(BaseModel):
     AUTH_TYPES_CHOICES = (
