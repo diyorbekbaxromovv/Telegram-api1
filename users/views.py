@@ -58,7 +58,7 @@ class ResendVerifyView(APIView):
     def post(self, request):
         user = self.request.user
         
-        self.check_user_code(user)
+        self.ckeck_user_code(user)
         
         if user.auth_type == VIA_EMAIL:
             code = user.create_confirmation_code(VIA_EMAIL)
@@ -75,8 +75,12 @@ class ResendVerifyView(APIView):
             }
             raise ValidationError(data)
         
-        return user
+        data = {
+            'status': True,
+            'message': 'Sizga tasdiqlash kodi qayta yuborildi'
+        }
     
+        return Response(data)
     
     def ckeck_user_code(self, user):
         verify_code = user.confirmation_code.filter(is_confirmed=False, expire_time__gte=datetime.now())
